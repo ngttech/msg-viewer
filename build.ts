@@ -46,8 +46,11 @@ async function build() {
       minify: true,
     });
     
-    // Copy HTML file manually
-    await fs.copyFile("./lib/index.html", path.join(DEST_DIR, "index.html"));
+    // Copy HTML file manually and fix script reference
+    let htmlContent = await fs.readFile("./lib/index.html", "utf-8");
+    // Replace the TypeScript script reference with the built JavaScript
+    htmlContent = htmlContent.replace('./scripts/index.ts', './index.js');
+    await fs.writeFile(path.join(DEST_DIR, "index.html"), htmlContent);
     
     // Copy CSS files
     const stylesDir = path.join(SOURCE_DIR, "styles");
