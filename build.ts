@@ -1,4 +1,3 @@
-import html from 'bun-plugin-html';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -40,14 +39,37 @@ async function build() {
   console.log("Building...");
 
   try {
+    // Build TypeScript/JavaScript entry points
     await Bun.build({
-      entrypoints: ["./lib/index.html"],
+      entrypoints: ["./lib/scripts/index.ts"],
       outdir: DEST_DIR,
       minify: true,
-      plugins: [
-        html({ inline: true }),
-      ],
     });
+    
+    // Copy HTML file manually
+    await fs.copyFile("./lib/index.html", path.join(DEST_DIR, "index.html"));
+    
+    // Copy CSS files
+    const stylesDir = path.join(SOURCE_DIR, "styles");
+    const destStylesDir = path.join(DEST_DIR, "styles");
+    await fs.mkdir(destStylesDir, { recursive: true });
+    
+    try {
+      const styleFiles = await fs.readdir(stylesDir);
+      for (const file of styleFiles) {
+        await fs.copyFile(path.join(stylesDir, file), path.join(destStylesDir, file));
+      }
+    } catch(err) {
+      console.log("No styles directory found or error copying styles");
+    }
+    
+    // Copy favicon
+    try {
+      await fs.copyFile("./lib/favicon.ico", path.join(DEST_DIR, "favicon.ico"));
+    } catch(err) {
+      console.log("No favicon found");
+    }
+    
     console.log("Build succeeded!\n");
   } catch(err) {
     console.error("Failed to build.");

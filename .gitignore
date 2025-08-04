@@ -182,3 +182,5 @@ dist
 
 # Contains Documentation which might be large in some cases
 /documentation
+# Keep docs folder for GitHub Pages (don't ignore it)
+# docs/ should be tracked in git for GitHub Pages deployment
