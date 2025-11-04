@@ -1,9 +1,9 @@
 import { CompoundFile } from "./compound-file/compound-file";
 import { TEXT_DECODER } from "./compound-file/constants/text-decoder";
 import type { DirectoryEntry } from "./compound-file/directory/types/directory-entry";
-import { ATTACH_PROPERTIES, PropertySource, RECIP_PROPERTIES, ROOT_PROPERTIES, type Property } from "./streams/property/properties";
+import { ATTACH_PROPERTIES, CODEPAGE_PROPERTY, CODEPAGES, PropertySource, RECIP_PROPERTIES, ROOT_PROPERTIES, type Property } from "./streams/property/properties";
 import { getPropertyStreamEntry } from "./streams/property/property-stream";
-import { PtypBinary, PtypObject, PtypString, PtypTime, type PropertyType } from "./streams/property/property-types";
+import { PtypBinary, PtypObject, PtypString, PtypString8, PtypTime, type PropertyType } from "./streams/property/property-types";
 import type { PropertyStreamEntry } from "./streams/property/types/property-stream-entry";
 import type { Attachment, Message, MessageContent, Recipient } from "./types/message";
 
@@ -26,7 +26,8 @@ export function parseDir(file: CompoundFile, dir: DirectoryEntry): Message {
 }
 
 function getContent(file: CompoundFile, dir: DirectoryEntry, pStreamEntry: PropertyStreamEntry): MessageContent {
-  return getValue(file, ROOT_PROPERTIES, dir, pStreamEntry);
+  const codepage = getCodepage(file, dir, pStreamEntry);
+  return getValue(file, ROOT_PROPERTIES, dir, pStreamEntry, codepage);
 }
 
 function getRecipients(file: CompoundFile, dir: DirectoryEntry): Recipient[] {
@@ -51,13 +52,21 @@ function getValues<T>(file: CompoundFile, dir: DirectoryEntry, properties: Prope
   return list;
 }
 
-function getValue<T>(file: CompoundFile, properties: Property[], dir: DirectoryEntry, entry: PropertyStreamEntry): T {
+function getCodepage(file: CompoundFile, dir: DirectoryEntry, entry: PropertyStreamEntry): number | undefined {
+  return getValue<{ codepage: number | undefined }>(file, [CODEPAGE_PROPERTY], dir, entry).codepage;
+}
+
+function getValue<T>(file: CompoundFile, properties: Property[], dir: DirectoryEntry, entry: PropertyStreamEntry, codepage?: number): T {
   return properties.reduce((acc, p) => {
     if (p.source == PropertySource.Stream) {
-      const streamName = `__substg1.0_${p.id.padStart(4, "0")}${p.type.id.toString(16).padStart(4, "0")}`;
-      const entry = file.directory.get(streamName, dir.childId, false);
-      if (!entry) return acc;
-      acc[p.name as keyof T] = getValueFromStream(file, entry, p.type) as T[keyof T];
+      for (const ptype of p.types) {
+        const streamName = `__substg1.0_${p.id.padStart(4, "0")}${ptype.id.toString(16).padStart(4, "0")}`;
+        const entry = file.directory.get(streamName, dir.childId, false);
+        if (entry) {
+          acc[p.name as keyof T] = getValueFromStream(file, entry, ptype, codepage) as T[keyof T];
+          break;
+        }
+      }
     } else {
       const value = getValueFromProperty(entry, p);
       if (!value) return acc;
@@ -72,7 +81,7 @@ function getValueFromProperty(entry: PropertyStreamEntry, property: Property) {
   const value = entry.data.get(property.id.toLowerCase())?.valueOrSize;
   if (!value) return "";
   
-  switch (property.type) {
+  switch (property.types[0]) {
     case PtypTime: {
       // Subtracting the number of seconds between January 1, 1601 and January 1, 1970.
       return new Date(Number(value as bigint / 10000n) - 1.16444736e13);
@@ -81,12 +90,21 @@ function getValueFromProperty(entry: PropertyStreamEntry, property: Property) {
   }  
 }
 
-function getValueFromStream(file: CompoundFile, entry: DirectoryEntry, type: PropertyType)  {
+function getValueFromStream(file: CompoundFile, entry: DirectoryEntry, type: PropertyType, codepage?: number): string | DataView | DirectoryEntry | null {
   switch (type) {
     case PtypString: {
       let value = "";
       file.readStream(entry, (offset, bytes) => {
         value += TEXT_DECODER.decode(new DataView(file.view.buffer, offset, bytes));
+      });
+
+      return value;
+    };
+    case PtypString8: {
+      const decoder = new TextDecoder(CODEPAGES.get(codepage || 65001));
+      let value = "";
+      file.readStream(entry, (offset, bytes) => {
+        value += decoder.decode(new DataView(file.view.buffer, offset, bytes));
       });
 
       return value;
