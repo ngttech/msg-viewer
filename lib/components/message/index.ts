@@ -1,6 +1,7 @@
 import type { DirectoryEntry } from "../../scripts/msg/compound-file/directory/types/directory-entry";
 import type { Message, MessageContent } from "../../scripts/msg/types/message";
 import { createFragmentFromTemplate } from "../../scripts/utils/html-template-util";
+import { generateEml } from "../../scripts/utils/eml/generate-eml";
 import { attachmentsFragment } from "../attachment";
 import { embeddedMsgsFragment } from "../embedded-msg";
 import { recipientsFragments } from "../recipient";
@@ -31,6 +32,33 @@ export function messageFragment(message: Message, renderDir: (dir: DirectoryEntr
     const lastChild = $container.lastChild as HTMLElement;
     if (lastChild) {
       lastChild.classList.remove("hidden");
+    }
+  });
+
+  container.querySelector(".msg-download-eml-btn")?.addEventListener("click", () => {
+    try {
+      // Generate EML content
+      const emlContent = generateEml(message);
+      
+      // Create blob
+      const blob = new Blob([emlContent], { type: 'message/rfc822' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create download link
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sanitizeFilename(message.content.subject || 'message')}.eml`;
+      
+      // Trigger download
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to generate EML:', error);
+      alert('Failed to download EML file. Please try again.');
     }
   });
 
@@ -69,6 +97,14 @@ function getDate(content: MessageContent): string {
     timeZone: "UTC",
     timeZoneName: "short"
   }) ?? "";
+}
+
+function sanitizeFilename(filename: string): string {
+  if (!filename) return "message";
+  return filename
+    .replace(/[\r\n\x00]/g, "")
+    .replace(/[\/\\:*?"<>|]/g, "_")
+    .trim();
 }
 
 interface MessageViewModel {

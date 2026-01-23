@@ -12,6 +12,20 @@
   padding: var(--h-padding) var(--h-padding)  0;
 }
 
+.msg-header-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.msg-download-eml-btn {
+  padding: 0;
+  background-color: #235b8d;
+}
+.msg-download-eml-btn svg {
+  display: block; 
+}
+
 .msg-close-btn {
   padding: 0;
   background-color: #b42020;
