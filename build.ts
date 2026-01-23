@@ -9,6 +9,7 @@ try {
   await clearDestDir();
   await createDestDir();
   await copyResourceFiles();
+  await copyFavicon();
   await build();
 } catch(err) {
   console.error("Failed to build. Error: ", err);
@@ -33,6 +34,20 @@ async function copyResourceFiles() {
     console.log("Resource files copied successfully!\n");
   } catch (err) {
     console.error(`Failed to read resource directory "${resourceDir}".`);
+  }
+}
+
+async function copyFavicon() {
+  const faviconSrc = path.join(SOURCE_DIR, "favicon.ico");
+  const faviconDest = path.join(DEST_DIR, "favicon.ico");
+  console.log(`Copying favicon from "${faviconSrc}" to "${faviconDest}".`);
+  
+  try {
+    await fs.copyFile(faviconSrc, faviconDest);
+    console.log("Favicon copied successfully!\n");
+  } catch(err) {
+    console.error(`Failed to copy favicon. Error: `, err);
+    throw err;
   }
 }
 
