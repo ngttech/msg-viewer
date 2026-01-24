@@ -1,0 +1,13 @@
+.recipient-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space1);
+  padding: var(--space1) var(--space2);
+  background: var(--surface2);
+  border: 1px solid var(--borderSubtle);
+  border-radius: var(--radiusXs);
+  font-size: 0.875rem;
+  color: var(--text1);
+  box-shadow: var(--shadow1);
+  white-space: nowrap;
+}

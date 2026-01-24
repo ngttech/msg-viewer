@@ -1,3 +1,42 @@
 .msg-attach-btn {
-  background-color: #1d5c56;
+  background: var(--surface2);
+  border: 1px solid var(--borderSubtle);
+  border-radius: var(--radiusMd);
+  padding: var(--space3);
+  display: flex;
+  align-items: center;
+  gap: var(--space2);
+  text-decoration: none;
+  color: var(--text1);
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow1);
+  min-width: 200px;
+}
+
+.msg-attach-btn:hover {
+  background: var(--surface1);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow2);
+  border-color: var(--accentOrange);
+}
+
+.msg-attach-btn svg {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.msg-attach-btn .flex-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.msg-attach-btn .flex-col > span:first-child {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.msg-attach-btn .color-text-2 {
+  font-size: 0.875rem;
 }

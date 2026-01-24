@@ -1,3 +1,33 @@
 .embedded-msg-btn {
-  background-color: rgb(74, 126, 45);
+  background: var(--surface2);
+  border: 1px solid var(--borderSubtle);
+  border-radius: var(--radiusMd);
+  padding: var(--space3);
+  display: flex;
+  align-items: center;
+  gap: var(--space2);
+  color: var(--text1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow1);
+  min-width: 200px;
+}
+
+.embedded-msg-btn:hover {
+  background: var(--surface1);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow2);
+  border-color: var(--accentOrange);
+}
+
+.embedded-msg-btn svg {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.embedded-msg-btn span {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

@@ -1,4 +1,18 @@
 .msg-error {
-  padding: 20px;
-  color: #fe5e5e;
+  margin: var(--space5);
+  padding: var(--space4);
+  background: var(--surface1);
+  border: 1px solid var(--accentRed);
+  border-radius: var(--radiusMd);
+  color: var(--accentRed);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space3);
+  box-shadow: var(--shadow2);
+}
+
+.msg-error::before {
+  content: "⚠";
+  font-size: 1.5rem;
+  flex-shrink: 0;
 }
