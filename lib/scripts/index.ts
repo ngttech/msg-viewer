@@ -15,13 +15,30 @@ $themeToggle.addEventListener("click", () => {
   localStorage.setItem("theme", newTheme);
 });
 
+// Multi-file state management
+interface MessageItem {
+  id: string;
+  fileName: string;
+  message: Message | null;
+  preview: {
+    sender: string;
+    subject: string;
+    snippet: string;
+    date: Date | null;
+  };
+  error?: string;
+}
+
+let messages: MessageItem[] = [];
+let selectedId: string | null = null;
+
 // File Upload
 const $file = document.getElementById("file")!;
 
 $file.addEventListener("change", async (event) => {
   const target = event.target as HTMLInputElement;
   if (target?.files?.length === 0) return;
-  updateMessage(target.files!);
+  await addMessages(target.files!);
 });
 
 // To reset the file input
@@ -41,7 +58,7 @@ function createDropzone() {
         <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
       </svg>
     </div>
-    <h2 class="dropzone-title">Drop your .msg file here</h2>
+    <h2 class="dropzone-title">Drop your .msg files here</h2>
     <p class="dropzone-subtitle">Or click to browse</p>
     <p class="dropzone-note">All local, nothing is uploaded or shared.</p>
   `;
@@ -69,7 +86,7 @@ target.addEventListener("dragleave", (event) => {
   }
 });
 
-target.addEventListener("drop", (event) => {
+target.addEventListener("drop", async (event) => {
   event.preventDefault();
   if (dropzone) {
     dropzone.classList.remove("dragover");
@@ -77,58 +94,214 @@ target.addEventListener("drop", (event) => {
   
   const files = event.dataTransfer!.files;
   if (files.length == 0) return;
-  if (!files[0].name.endsWith(".msg")) return;
   
-  const $file = document.getElementById("file")! as HTMLInputElement;
-  $file.files = files;
-  updateMessage(files);
+  // Filter for .msg files only
+  const msgFiles: File[] = [];
+  for (let i = 0; i < files.length; i++) {
+    if (files[i].name.endsWith(".msg")) {
+      msgFiles.push(files[i]);
+    }
+  }
+  
+  if (msgFiles.length === 0) return;
+  
+  await addMessages(msgFiles);
 });
 
-async function updateMessage(files: FileList) {
-  const arrayBuffer = await files[0].arrayBuffer();
-  const $msg = document.getElementById("msg")!;
+// Add multiple messages to the list
+async function addMessages(files: FileList | File[]) {
+  const fileArray = Array.from(files);
+  const newMessages: MessageItem[] = [];
   
-  // Show loading state
-  $msg.innerHTML = `
-    <div class="dropzone">
-      <div class="dropzone-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--accentOrange)">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-        </svg>
-      </div>
-      <h2 class="dropzone-title">Loading message...</h2>
-    </div>
-  `;
-  
-  renderMessage($msg, 
-    () => parse(new DataView(arrayBuffer)), 
-    (fragment) => {
-      $msg.replaceChildren(fragment);
-      dropzone = null;
+  for (const file of fileArray) {
+    if (!file.name.endsWith(".msg")) continue;
+    
+    const id = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const messageItem: MessageItem = {
+      id,
+      fileName: file.name,
+      message: null,
+      preview: {
+        sender: "",
+        subject: file.name,
+        snippet: "Loading...",
+        date: null
+      }
+    };
+    
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const message = parse(new DataView(arrayBuffer));
+      messageItem.message = message;
+      messageItem.preview = extractPreview(message, file.name);
+    } catch (e) {
+      messageItem.error = `Failed to parse: ${e}`;
+      messageItem.preview.snippet = `Error: ${e}`;
     }
-  );
+    
+    newMessages.push(messageItem);
+  }
+  
+  // Append to messages array
+  messages.push(...newMessages);
+  
+  // Render preview list
+  renderPreviewList();
+  
+  // Auto-select first message if nothing is selected
+  if (selectedId === null && newMessages.length > 0) {
+    selectMessage(newMessages[0].id);
+  }
 }
 
-function renderMessage($msg: HTMLElement, getMessage: () => Message, updateDom: (fragment: DocumentFragment) => void) {
+// Extract preview data from parsed message
+function extractPreview(message: Message, fileName: string): MessageItem["preview"] {
+  const content = message.content;
+  
+  // Sender
+  let sender = content.senderName ?? "";
+  if (content.senderEmail) {
+    sender += sender ? ` <${content.senderEmail}>` : content.senderEmail;
+  }
+  if (!sender) sender = "Unknown Sender";
+  
+  // Subject
+  const subject = content.subject || fileName;
+  
+  // Snippet - strip HTML and take first 120-160 chars
+  let snippet = "";
+  if (content.body) {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = content.body;
+    snippet = tempDiv.textContent || tempDiv.innerText || "";
+    snippet = snippet.replace(/\s+/g, " ").trim();
+    snippet = snippet.substring(0, 160);
+    if (snippet.length === 160) snippet += "...";
+  }
+  if (!snippet) snippet = "No preview available";
+  
+  // Date
+  const date = content.date || null;
+  
+  return { sender, subject, snippet, date };
+}
+
+// Render the preview list in the middle panel
+function renderPreviewList() {
+  const $previewList = document.getElementById("preview-list")!;
+  
+  if (messages.length === 0) {
+    $previewList.innerHTML = `
+      <div class="preview-empty">
+        <p>Upload .msg files to see message previews</p>
+      </div>
+    `;
+    return;
+  }
+  
+  $previewList.innerHTML = "";
+  
+  messages.forEach(msg => {
+    const item = document.createElement("div");
+    item.className = "preview-item";
+    if (msg.id === selectedId) {
+      item.classList.add("selected");
+    }
+    item.dataset.id = msg.id;
+    
+    const dateStr = formatDate(msg.preview.date);
+    
+    item.innerHTML = `
+      <div class="preview-header-row">
+        <div class="preview-sender">${escapeHtml(msg.preview.sender)}</div>
+        <div class="preview-date">${dateStr}</div>
+      </div>
+      <div class="preview-subject">${escapeHtml(msg.preview.subject)}</div>
+      <div class="preview-snippet">${escapeHtml(msg.preview.snippet)}</div>
+      ${msg.error ? `<div class="preview-error">⚠ ${escapeHtml(msg.error)}</div>` : ""}
+    `;
+    
+    item.addEventListener("click", () => selectMessage(msg.id));
+    
+    $previewList.appendChild(item);
+  });
+}
+
+// Format date like Outlook (time for today, date for others)
+function formatDate(date: Date | null): string {
+  if (!date) return "";
+  
+  const now = new Date();
+  const isToday = date.getDate() === now.getDate() &&
+                  date.getMonth() === now.getMonth() &&
+                  date.getFullYear() === now.getFullYear();
+  
+  if (isToday) {
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+  } else {
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined
+    });
+  }
+}
+
+// Select and render a message
+function selectMessage(id: string) {
+  selectedId = id;
+  
+  // Update preview list selection
+  const $previewList = document.getElementById("preview-list")!;
+  $previewList.querySelectorAll(".preview-item").forEach(item => {
+    if ((item as HTMLElement).dataset.id === id) {
+      item.classList.add("selected");
+    } else {
+      item.classList.remove("selected");
+    }
+  });
+  
+  // Find the message
+  const messageItem = messages.find(m => m.id === id);
+  if (!messageItem) return;
+  
+  // Clear reading pane
+  const $msg = document.getElementById("msg")!;
+  
+  // If error, show error
+  if (messageItem.error || !messageItem.message) {
+    const fragment = errorFragment(messageItem.error || "Failed to load message");
+    $msg.replaceChildren(fragment);
+    return;
+  }
+  
+  // Render message
+  renderMessage($msg, messageItem.message);
+  dropzone = null;
+}
+
+// Render message in reading pane
+function renderMessage($msg: HTMLElement, message: Message) {
   let fragment: DocumentFragment;
-  try {    
-    const message = getMessage();
+  try {
     fragment = messageFragment(message, dir => {
-      renderMessage($msg,
-        () => parseDir(message.file, dir), 
-        (fragment) => {
-          for (let i = 0; i < $msg.children.length; i++) {
-            const child = $msg.children[i] as HTMLElement;
-            child.classList.add("hidden");
-          };
-          $msg.appendChild(fragment)
-        }
-      );
+      renderMessage($msg, parseDir(message.file, dir));
     });
   } catch (e) {
-    window.gtag('event', 'exception', { 'description': e, 'fatal': true });
+    window.gtag("event", "exception", { description: e, fatal: true });
     fragment = errorFragment(`An error occured during the parsing of the .msg file. Error: ${e}`);
   }
+  
+  $msg.replaceChildren(fragment);
+}
 
-  updateDom(fragment);
+// Escape HTML for safe rendering
+function escapeHtml(text: string): string {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
 }

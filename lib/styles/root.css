@@ -399,21 +399,51 @@ body[data-theme="light"] .moon-icon {
   border-left: 3px solid var(--accentOrange);
 }
 
+.preview-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space1);
+  gap: var(--space2);
+}
+
 .preview-subject {
   font-weight: 600;
   color: var(--text1);
   margin-bottom: var(--space1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .preview-sender {
   font-size: 0.875rem;
   color: var(--text2);
-  margin-bottom: var(--space1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.preview-date {
+  font-size: 0.75rem;
+  color: var(--text2);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .preview-snippet {
   font-size: 0.8rem;
   color: var(--text2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-error {
+  font-size: 0.75rem;
+  color: var(--accentRed);
+  margin-top: var(--space1);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
