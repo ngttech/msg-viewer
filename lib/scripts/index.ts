@@ -34,13 +34,71 @@ let messages: MessageItem[] = [];
 let selectedId: string | null = null;
 let selectedIds = new Set<string>(); // for multi-select checkboxes
 
+// Notification system
+function showNotification(message: string, type: "error" | "success" | "info" = "info") {
+  // Remove any existing notification
+  const existingNotification = document.querySelector(".notification");
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+  
+  // Create notification element
+  const notification = document.createElement("div");
+  notification.className = `notification notification-${type}`;
+  notification.innerHTML = `
+    <div class="notification-content">
+      <svg class="notification-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        ${type === "error" ? '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' : 
+          type === "success" ? '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>' :
+          '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>'}
+      </svg>
+      <span class="notification-message">${message}</span>
+    </div>
+    <button class="notification-close" aria-label="Close notification">×</button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Add close button handler
+  const closeBtn = notification.querySelector(".notification-close");
+  closeBtn?.addEventListener("click", () => {
+    notification.classList.add("notification-hide");
+    setTimeout(() => notification.remove(), 300);
+  });
+  
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.classList.add("notification-hide");
+      setTimeout(() => notification.remove(), 300);
+    }
+  }, 5000);
+}
+
 // File Upload
 const $file = document.getElementById("file")!;
 
 $file.addEventListener("change", async (event) => {
   const target = event.target as HTMLInputElement;
   if (target?.files?.length === 0) return;
-  await addMessages(target.files!);
+  
+  // Check for invalid files
+  const files = Array.from(target.files!);
+  const invalidFiles = files.filter(file => !file.name.toLowerCase().endsWith(".msg"));
+  
+  if (invalidFiles.length > 0) {
+    const fileNames = invalidFiles.map(f => f.name).join(", ");
+    showNotification(
+      `Invalid file type detected: ${fileNames}. Only .msg files are supported.`,
+      "error"
+    );
+  }
+  
+  // Process valid files
+  const validFiles = files.filter(file => file.name.toLowerCase().endsWith(".msg"));
+  if (validFiles.length > 0) {
+    await addMessages(validFiles);
+  }
 });
 
 // To reset the file input
@@ -97,13 +155,20 @@ target.addEventListener("drop", async (event) => {
   const files = event.dataTransfer!.files;
   if (files.length == 0) return;
   
-  // Filter for .msg files only
-  const msgFiles: File[] = [];
-  for (let i = 0; i < files.length; i++) {
-    if (files[i].name.endsWith(".msg")) {
-      msgFiles.push(files[i]);
-    }
+  // Check for invalid files
+  const fileArray = Array.from(files);
+  const invalidFiles = fileArray.filter(file => !file.name.toLowerCase().endsWith(".msg"));
+  
+  if (invalidFiles.length > 0) {
+    const fileNames = invalidFiles.map(f => f.name).join(", ");
+    showNotification(
+      `Invalid file type detected: ${fileNames}. Only .msg files are supported.`,
+      "error"
+    );
   }
+  
+  // Filter for .msg files only
+  const msgFiles = fileArray.filter(file => file.name.toLowerCase().endsWith(".msg"));
   
   if (msgFiles.length === 0) return;
   
@@ -116,7 +181,7 @@ async function addMessages(files: FileList | File[]) {
   const newMessages: MessageItem[] = [];
   
   for (const file of fileArray) {
-    if (!file.name.endsWith(".msg")) continue;
+    if (!file.name.toLowerCase().endsWith(".msg")) continue;
     
     const id = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const messageItem: MessageItem = {

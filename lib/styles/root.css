@@ -672,10 +672,118 @@ body[data-theme="light"] .moon-icon {
   margin: 0;
 }
 
-.dropzone-note {
+  .dropzone-note {
   font-size: 0.875rem;
   color: var(--text2);
   margin: 0;
+}
+
+/* Notification System */
+.notification {
+  position: fixed;
+  top: var(--space5);
+  right: var(--space5);
+  min-width: 320px;
+  max-width: 500px;
+  background: var(--panel);
+  border-radius: var(--radiusMd);
+  box-shadow: var(--shadow3);
+  padding: var(--space4);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space3);
+  z-index: 10000;
+  animation: slideIn 0.3s ease;
+  border-left: 4px solid var(--accentOrange);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification-hide {
+  animation: slideOut 0.3s ease forwards;
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+.notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space2);
+  flex: 1;
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.notification-message {
+  color: var(--text1);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.notification-close {
+  all: unset;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text2);
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-close:hover {
+  color: var(--text1);
+}
+
+.notification-error {
+  border-left-color: var(--accentRed);
+}
+
+.notification-error .notification-icon {
+  color: var(--accentRed);
+}
+
+.notification-success {
+  border-left-color: #4caf50;
+}
+
+.notification-success .notification-icon {
+  color: #4caf50;
+}
+
+.notification-info {
+  border-left-color: var(--accentOrange);
+}
+
+.notification-info .notification-icon {
+  color: var(--accentOrange);
 }
 
 /* Responsive Design */
@@ -719,5 +827,13 @@ body[data-theme="light"] .moon-icon {
   
   .header-actions {
     justify-content: space-between;
+  }
+  
+  .notification {
+    top: var(--space3);
+    right: var(--space3);
+    left: var(--space3);
+    min-width: auto;
+    max-width: none;
   }
 }
