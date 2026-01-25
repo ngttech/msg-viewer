@@ -205,10 +205,10 @@ body {
   line-height: 1.5;
 }
 
-/* 3-Panel Layout */
+/* 2-Panel Layout */
 #root {
   display: grid;
-  grid-template-columns: 220px minmax(300px, 1fr) minmax(500px, 2fr);
+  grid-template-columns: minmax(350px, 1fr) minmax(600px, 2fr);
   gap: var(--space3);
   height: 100vh;
   padding: var(--space4);
@@ -280,7 +280,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: 40px;
+  height: 40px;
   padding: var(--space2);
   border-radius: var(--radiusMd);
   background: var(--surface1);
@@ -292,6 +293,7 @@ body {
 .theme-toggle:hover {
   background: var(--surface2);
   transform: translateY(-1px);
+  box-shadow: var(--shadow2);
 }
 
 .theme-icon {
@@ -371,6 +373,15 @@ body[data-theme="light"] .moon-icon {
 .preview-list {
   flex: 1;
   overflow-y: auto;
+}
+
+.preview-footer {
+  padding: var(--space4);
+  border-top: 1px solid var(--borderSubtle);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--surface1);
 }
 
 .preview-empty {
@@ -472,38 +483,77 @@ body[data-theme="light"] .moon-icon {
   all: unset;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space2);
-  padding: var(--space2) var(--space3);
-  font-size: 0.875rem;
+  padding: var(--space3) var(--space5);
+  font-size: 0.95rem;
   font-weight: 500;
   color: white;
-  background: var(--accentOrange);
-  border-radius: var(--radiusSm);
+  background: linear-gradient(135deg, var(--accentOrange) 0%, #d66d34 100%);
+  border-radius: var(--radiusMd);
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: var(--shadow1);
+  box-shadow: var(--shadow2);
+  width: 100%;
 }
 
 .btn-batch-download:hover:not(:disabled) {
-  background: var(--accentOrangeHover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow2);
+  background: linear-gradient(135deg, var(--accentOrangeHover) 0%, var(--accentOrange) 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow3);
+}
+
+.btn-batch-download:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow1);
 }
 
 .btn-batch-download:disabled {
-  opacity: 0.5;
+  background: var(--surface2);
+  color: var(--text2);
   cursor: not-allowed;
-  display: none;
+  opacity: 0.5;
 }
 
 .btn-batch-download svg {
   flex-shrink: 0;
 }
 
-/* Reading Pane (Panel 3) */
+/* Reading Pane (Panel 2) */
 #reading-pane {
   background: var(--panel);
   position: relative;
+}
+
+.reading-pane-header {
+  padding: var(--space4);
+  border-bottom: 1px solid var(--borderSubtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface1);
+}
+
+.app-identity-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space2);
+}
+
+.app-icon-small {
+  filter: drop-shadow(0 2px 4px rgba(232, 125, 62, 0.3));
+}
+
+.app-title-small {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--accentOrange);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space3);
 }
 
 #msg {
@@ -582,18 +632,22 @@ body[data-theme="light"] .moon-icon {
 /* Responsive Design */
 @media (max-width: 1200px) {
   #root {
-    grid-template-columns: 200px 1fr 1.5fr;
+    grid-template-columns: minmax(300px, 1fr) minmax(500px, 1.8fr);
   }
 }
 
 @media (max-width: 900px) {
   #root {
-    grid-template-columns: 180px 1fr;
-    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
   }
   
   #preview-panel {
-    display: none;
+    max-height: 40vh;
+  }
+  
+  #reading-pane {
+    overflow: auto;
   }
 }
 
@@ -604,25 +658,17 @@ body[data-theme="light"] .moon-icon {
     padding: var(--space2);
   }
   
-  #sidebar {
-    padding: var(--space3);
-  }
-  
-  .app-identity {
-    flex-direction: row;
-    justify-content: flex-start;
-  }
-  
-  .app-icon {
-    width: 32px;
-    height: 32px;
-  }
-  
-  .sidebar-content {
-    display: none;
-  }
-  
   #preview-panel {
-    display: none;
+    max-height: 35vh;
+  }
+  
+  .reading-pane-header {
+    flex-direction: column;
+    gap: var(--space3);
+    align-items: stretch;
+  }
+  
+  .header-actions {
+    justify-content: space-between;
   }
 }
