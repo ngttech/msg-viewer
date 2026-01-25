@@ -402,10 +402,36 @@ async function downloadSelectedAsEml() {
   }
 }
 
-// Initialize batch download button
+// Select all messages
+function selectAllMessages() {
+  messages.forEach(msg => {
+    if (msg.message && !msg.error) {
+      selectedIds.add(msg.id);
+    }
+  });
+  renderPreviewList();
+}
+
+// Unselect all messages
+function unselectAllMessages() {
+  selectedIds.clear();
+  renderPreviewList();
+}
+
+// Initialize batch download button and select/unselect all buttons
 document.addEventListener("DOMContentLoaded", () => {
   const $batchBtn = document.getElementById("batch-download-btn");
   if ($batchBtn) {
     $batchBtn.addEventListener("click", downloadSelectedAsEml);
+  }
+  
+  const $selectAllBtn = document.getElementById("select-all-btn");
+  if ($selectAllBtn) {
+    $selectAllBtn.addEventListener("click", selectAllMessages);
+  }
+  
+  const $unselectAllBtn = document.getElementById("unselect-all-btn");
+  if ($unselectAllBtn) {
+    $unselectAllBtn.addEventListener("click", unselectAllMessages);
   }
 });

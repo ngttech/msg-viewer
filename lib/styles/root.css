@@ -360,13 +360,12 @@ body[data-theme="light"] .moon-icon {
 
 .preview-tab:hover {
   background: var(--surface1);
-  color: var(--text1);
+  color: var(--accentOrange);
 }
 
-.preview-tab.active {
+.preview-tab:active {
   background: var(--surface2);
-  color: var(--accentOrange);
-  box-shadow: var(--shadowInset);
+  transform: scale(0.98);
 }
 
 .preview-list {
