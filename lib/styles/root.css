@@ -587,6 +587,12 @@ body[data-theme="light"] .moon-icon {
   filter: drop-shadow(0 2px 4px rgba(232, 125, 62, 0.3));
 }
 
+.app-logo-small {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
 .app-title-small {
   font-size: 1.25rem;
   font-weight: 600;
