@@ -379,6 +379,7 @@ body[data-theme="light"] .moon-icon {
   padding: var(--space4);
   border-top: 1px solid var(--borderSubtle);
   display: flex;
+  gap: var(--space3);
   justify-content: center;
   align-items: center;
   background: var(--surface1);
@@ -494,7 +495,8 @@ body[data-theme="light"] .moon-icon {
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: var(--shadow2);
-  width: 100%;
+  flex: 1;
+  max-width: 300px;
 }
 
 .btn-batch-download:hover:not(:disabled) {
@@ -516,6 +518,47 @@ body[data-theme="light"] .moon-icon {
 }
 
 .btn-batch-download svg {
+  flex-shrink: 0;
+}
+
+.btn-batch-delete {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space2);
+  padding: var(--space3) var(--space5);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: white;
+  background: linear-gradient(135deg, var(--accentRed) 0%, #b83838 100%);
+  border-radius: var(--radiusMd);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow2);
+  flex: 1;
+  max-width: 300px;
+}
+
+.btn-batch-delete:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--accentRedHover) 0%, var(--accentRed) 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow3);
+}
+
+.btn-batch-delete:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow1);
+}
+
+.btn-batch-delete:disabled {
+  background: var(--surface2);
+  color: var(--text2);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-batch-delete svg {
   flex-shrink: 0;
 }
 

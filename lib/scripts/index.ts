@@ -339,27 +339,47 @@ function escapeHtml(text: string): string {
 
 // Update batch download button visibility and state
 function updateBatchDownloadButton() {
-  const $batchBtn = document.getElementById("batch-download-btn") as HTMLButtonElement;
-  if (!$batchBtn) return;
+  const $batchDownloadBtn = document.getElementById("batch-download-btn") as HTMLButtonElement;
+  const $batchDeleteBtn = document.getElementById("batch-delete-btn") as HTMLButtonElement;
   
-  if (selectedIds.size >= 2) {
-    $batchBtn.disabled = false;
-    $batchBtn.style.display = "inline-flex";
-    $batchBtn.textContent = `Download Selected (${selectedIds.size})`;
-    
-    // Re-add icon
-    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    icon.setAttribute("width", "16");
-    icon.setAttribute("height", "16");
-    icon.setAttribute("viewBox", "0 0 24 24");
-    icon.setAttribute("fill", "currentColor");
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("d", "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z");
-    icon.appendChild(path);
-    $batchBtn.insertBefore(icon, $batchBtn.firstChild);
-  } else {
-    $batchBtn.disabled = true;
-    $batchBtn.style.display = "none";
+  if ($batchDownloadBtn) {
+    if (selectedIds.size >= 2) {
+      $batchDownloadBtn.disabled = false;
+      $batchDownloadBtn.textContent = `Download Selected (${selectedIds.size})`;
+      
+      // Re-add icon
+      const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      icon.setAttribute("width", "16");
+      icon.setAttribute("height", "16");
+      icon.setAttribute("viewBox", "0 0 24 24");
+      icon.setAttribute("fill", "currentColor");
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z");
+      icon.appendChild(path);
+      $batchDownloadBtn.insertBefore(icon, $batchDownloadBtn.firstChild);
+    } else {
+      $batchDownloadBtn.disabled = true;
+    }
+  }
+  
+  if ($batchDeleteBtn) {
+    if (selectedIds.size >= 2) {
+      $batchDeleteBtn.disabled = false;
+      $batchDeleteBtn.textContent = `Delete Selected (${selectedIds.size})`;
+      
+      // Re-add icon
+      const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      icon.setAttribute("width", "16");
+      icon.setAttribute("height", "16");
+      icon.setAttribute("viewBox", "0 0 24 24");
+      icon.setAttribute("fill", "currentColor");
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", "M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z");
+      icon.appendChild(path);
+      $batchDeleteBtn.insertBefore(icon, $batchDeleteBtn.firstChild);
+    } else {
+      $batchDeleteBtn.disabled = true;
+    }
   }
 }
 
@@ -418,11 +438,50 @@ function unselectAllMessages() {
   renderPreviewList();
 }
 
+// Delete selected messages
+function deleteSelectedMessages() {
+  if (selectedIds.size < 2) return;
+  
+  // Get IDs to delete
+  const idsToDelete = Array.from(selectedIds);
+  
+  // Remove messages from the array
+  messages = messages.filter(msg => !idsToDelete.includes(msg.id));
+  
+  // Clear selections
+  selectedIds.clear();
+  
+  // If the currently selected message was deleted, clear the reading pane
+  if (selectedId && idsToDelete.includes(selectedId)) {
+    selectedId = null;
+    const $msg = document.getElementById("msg")!;
+    
+    // Show dropzone or empty state
+    if (messages.length === 0) {
+      if (!dropzone) {
+        dropzone = createDropzone();
+        $msg.replaceChildren(dropzone);
+      }
+    } else {
+      // Select the first available message
+      selectMessage(messages[0].id);
+    }
+  }
+  
+  // Re-render the preview list
+  renderPreviewList();
+}
+
 // Initialize batch download button and select/unselect all buttons
 document.addEventListener("DOMContentLoaded", () => {
-  const $batchBtn = document.getElementById("batch-download-btn");
-  if ($batchBtn) {
-    $batchBtn.addEventListener("click", downloadSelectedAsEml);
+  const $batchDownloadBtn = document.getElementById("batch-download-btn");
+  if ($batchDownloadBtn) {
+    $batchDownloadBtn.addEventListener("click", downloadSelectedAsEml);
+  }
+  
+  const $batchDeleteBtn = document.getElementById("batch-delete-btn");
+  if ($batchDeleteBtn) {
+    $batchDeleteBtn.addEventListener("click", deleteSelectedMessages);
   }
   
   const $selectAllBtn = document.getElementById("select-all-btn");
