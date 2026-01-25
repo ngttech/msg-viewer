@@ -2,6 +2,7 @@ import { messageFragment } from "../components/message";
 import { errorFragment } from "../components/error";
 import type { Message } from "./msg/types/message";
 import { parse, parseDir } from "@molotochok/msg-viewer";
+import { generateEml } from "./utils/eml/generate-eml";
 
 // Theme Toggle
 const $themeToggle = document.getElementById("theme-toggle")!;
@@ -31,6 +32,7 @@ interface MessageItem {
 
 let messages: MessageItem[] = [];
 let selectedId: string | null = null;
+let selectedIds = new Set<string>(); // for multi-select checkboxes
 
 // File Upload
 const $file = document.getElementById("file")!;
@@ -196,6 +198,7 @@ function renderPreviewList() {
         <p>Upload .msg files to see message previews</p>
       </div>
     `;
+    updateBatchDownloadButton();
     return;
   }
   
@@ -211,7 +214,28 @@ function renderPreviewList() {
     
     const dateStr = formatDate(msg.preview.date);
     
-    item.innerHTML = `
+    // Create checkbox
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "preview-checkbox";
+    checkbox.dataset.id = msg.id;
+    checkbox.checked = selectedIds.has(msg.id);
+    
+    // Prevent checkbox click from selecting message
+    checkbox.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (checkbox.checked) {
+        selectedIds.add(msg.id);
+      } else {
+        selectedIds.delete(msg.id);
+      }
+      updateBatchDownloadButton();
+    });
+    
+    // Create content wrapper
+    const contentWrapper = document.createElement("div");
+    contentWrapper.className = "preview-item-content";
+    contentWrapper.innerHTML = `
       <div class="preview-header-row">
         <div class="preview-sender">${escapeHtml(msg.preview.sender)}</div>
         <div class="preview-date">${dateStr}</div>
@@ -221,10 +245,17 @@ function renderPreviewList() {
       ${msg.error ? `<div class="preview-error">⚠ ${escapeHtml(msg.error)}</div>` : ""}
     `;
     
-    item.addEventListener("click", () => selectMessage(msg.id));
+    // Add click handler to content wrapper only
+    contentWrapper.addEventListener("click", () => selectMessage(msg.id));
+    
+    // Assemble the item
+    item.appendChild(checkbox);
+    item.appendChild(contentWrapper);
     
     $previewList.appendChild(item);
   });
+  
+  updateBatchDownloadButton();
 }
 
 // Format date like Outlook (time for today, date for others)
@@ -305,3 +336,76 @@ function escapeHtml(text: string): string {
   div.textContent = text;
   return div.innerHTML;
 }
+
+// Update batch download button visibility and state
+function updateBatchDownloadButton() {
+  const $batchBtn = document.getElementById("batch-download-btn") as HTMLButtonElement;
+  if (!$batchBtn) return;
+  
+  if (selectedIds.size >= 2) {
+    $batchBtn.disabled = false;
+    $batchBtn.style.display = "inline-flex";
+    $batchBtn.textContent = `Download Selected (${selectedIds.size})`;
+    
+    // Re-add icon
+    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("width", "16");
+    icon.setAttribute("height", "16");
+    icon.setAttribute("viewBox", "0 0 24 24");
+    icon.setAttribute("fill", "currentColor");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z");
+    icon.appendChild(path);
+    $batchBtn.insertBefore(icon, $batchBtn.firstChild);
+  } else {
+    $batchBtn.disabled = true;
+    $batchBtn.style.display = "none";
+  }
+}
+
+// Download selected messages as EML files
+async function downloadSelectedAsEml() {
+  const selectedMessages = Array.from(selectedIds)
+    .map(id => messages.find(m => m.id === id))
+    .filter(m => m && m.message) as MessageItem[];
+  
+  for (let i = 0; i < selectedMessages.length; i++) {
+    const messageItem = selectedMessages[i];
+    try {
+      const emlContent = generateEml(messageItem.message!);
+      const blob = new Blob([emlContent], { type: "message/rfc822" });
+      const url = URL.createObjectURL(blob);
+      
+      // Sanitize filename
+      const sanitizeFilename = (name: string) => {
+        return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_").substring(0, 200);
+      };
+      
+      const subject = messageItem.message!.content.subject || "message";
+      const filename = `${sanitizeFilename(subject)}.eml`;
+      
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // Add delay between downloads to prevent browser blocking
+      if (i < selectedMessages.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } catch (e) {
+      console.error(`Failed to download EML for message ${messageItem.id}:`, e);
+    }
+  }
+}
+
+// Initialize batch download button
+document.addEventListener("DOMContentLoaded", () => {
+  const $batchBtn = document.getElementById("batch-download-btn");
+  if ($batchBtn) {
+    $batchBtn.addEventListener("click", downloadSelectedAsEml);
+  }
+});
