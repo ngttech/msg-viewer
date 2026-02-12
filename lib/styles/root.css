@@ -521,6 +521,47 @@ body[data-theme="light"] .moon-icon {
   flex-shrink: 0;
 }
 
+.btn-batch-print {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space2);
+  padding: var(--space3) var(--space5);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: white;
+  background: linear-gradient(135deg, #3a6fd6 0%, #2a58ad 100%);
+  border-radius: var(--radiusMd);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow2);
+  flex: 1;
+  max-width: 300px;
+}
+
+.btn-batch-print:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4e80e0 0%, #3a6fd6 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow3);
+}
+
+.btn-batch-print:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow1);
+}
+
+.btn-batch-print:disabled {
+  background: var(--surface2);
+  color: var(--text2);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-batch-print svg {
+  flex-shrink: 0;
+}
+
 .btn-batch-delete {
   all: unset;
   display: inline-flex;

@@ -3,6 +3,7 @@ import { errorFragment } from "../components/error";
 import type { Message } from "./msg/types/message";
 import { parse, parseDir } from "@molotochok/msg-viewer";
 import { generateEml } from "./utils/eml/generate-eml";
+import { askPrintAttachmentPreference, printMessages } from "./utils/print/print-message";
 
 // Theme Toggle
 const $themeToggle = document.getElementById("theme-toggle")!;
@@ -405,6 +406,7 @@ function escapeHtml(text: string): string {
 // Update batch download button visibility and state
 function updateBatchDownloadButton() {
   const $batchDownloadBtn = document.getElementById("batch-download-btn") as HTMLButtonElement;
+  const $batchPrintBtn = document.getElementById("batch-print-btn") as HTMLButtonElement;
   const $batchDeleteBtn = document.getElementById("batch-delete-btn") as HTMLButtonElement;
   
   if ($batchDownloadBtn) {
@@ -426,6 +428,26 @@ function updateBatchDownloadButton() {
       $batchDownloadBtn.disabled = true;
     }
   }
+
+  if ($batchPrintBtn) {
+    if (selectedIds.size >= 2) {
+      $batchPrintBtn.disabled = false;
+      $batchPrintBtn.textContent = `Print Selected (${selectedIds.size})`;
+      
+      // Re-add icon
+      const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      icon.setAttribute("width", "16");
+      icon.setAttribute("height", "16");
+      icon.setAttribute("viewBox", "0 0 24 24");
+      icon.setAttribute("fill", "currentColor");
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", "M6 9V3h12v6h2a2 2 0 0 1 2 2v6h-4v4H6v-4H2v-6a2 2 0 0 1 2-2h2zm2-4v4h8V5H8zm8 14v-4H8v4h8z");
+      icon.appendChild(path);
+      $batchPrintBtn.insertBefore(icon, $batchPrintBtn.firstChild);
+    } else {
+      $batchPrintBtn.disabled = true;
+    }
+  }
   
   if ($batchDeleteBtn) {
     if (selectedIds.size >= 2) {
@@ -445,6 +467,24 @@ function updateBatchDownloadButton() {
     } else {
       $batchDeleteBtn.disabled = true;
     }
+  }
+}
+
+function printSelectedMessages() {
+  const selectedMessages = Array.from(selectedIds)
+    .map(id => messages.find(m => m.id === id))
+    .filter(m => m && m.message) as MessageItem[];
+
+  if (selectedMessages.length < 2) return;
+
+  const options = askPrintAttachmentPreference();
+  if (!options) return;
+
+  try {
+    printMessages(selectedMessages.map(item => item.message!), options);
+  } catch (error) {
+    console.error("Failed to print selected messages:", error);
+    showNotification("Failed to print selected messages. Please try again.", "error");
   }
 }
 
@@ -547,6 +587,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const $batchDeleteBtn = document.getElementById("batch-delete-btn");
   if ($batchDeleteBtn) {
     $batchDeleteBtn.addEventListener("click", deleteSelectedMessages);
+  }
+
+  const $batchPrintBtn = document.getElementById("batch-print-btn");
+  if ($batchPrintBtn) {
+    $batchPrintBtn.addEventListener("click", printSelectedMessages);
   }
   
   const $selectAllBtn = document.getElementById("select-all-btn");

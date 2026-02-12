@@ -2,6 +2,7 @@ import type { DirectoryEntry } from "../../scripts/msg/compound-file/directory/t
 import type { Message, MessageContent } from "../../scripts/msg/types/message";
 import { createFragmentFromTemplate } from "../../scripts/utils/html-template-util";
 import { generateEml } from "../../scripts/utils/eml/generate-eml";
+import { askPrintAttachmentPreference, printMessages } from "../../scripts/utils/print/print-message";
 import { attachmentsFragment } from "../attachment";
 import { embeddedMsgsFragment } from "../embedded-msg";
 import { recipientsFragments } from "../recipient";
@@ -59,6 +60,18 @@ export function messageFragment(message: Message, renderDir: (dir: DirectoryEntr
     } catch (error) {
       console.error('Failed to generate EML:', error);
       alert('Failed to download EML file. Please try again.');
+    }
+  });
+
+  container.querySelector(".msg-print-btn")?.addEventListener("click", () => {
+    const options = askPrintAttachmentPreference();
+    if (!options) return;
+
+    try {
+      printMessages([message], options);
+    } catch (error) {
+      console.error("Failed to print message:", error);
+      alert("Failed to print message. Please try again.");
     }
   });
 

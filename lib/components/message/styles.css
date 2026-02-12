@@ -56,6 +56,32 @@
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
+.msg-print-btn {
+  padding: var(--space2);
+  background: linear-gradient(135deg, #3a6fd6 0%, #2a58ad 100%);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radiusMd);
+  box-shadow: var(--shadow2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.msg-print-btn:hover {
+  background: linear-gradient(135deg, #4e80e0 0%, #3a6fd6 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow3);
+}
+
+.msg-print-btn svg {
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
 .msg-close-btn {
   padding: var(--space2);
   background: linear-gradient(135deg, var(--accentRed) 0%, #b83838 100%);
